@@ -1,38 +1,51 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-export const User = ({ user, setUsers, users }) => {
+export const User = ({ user, deleteUser, updateUser }) => {
+  const [changedUser, setChangedUser] = useState(user);
 
-  const [changedUser, setChangedUser] = useState(user)
+  useEffect(() => {
+    setChangedUser(user) 
+  },[user])
 
-  const changeUser = (e) => {
+  const editUser = (e) => {
+    console.log(changedUser)
     const cache = {
-      ...changeUser,
-      [e.target.id]: e.target.value,      
+      ...changedUser,
+      [e.target.id]: e.target.value, 
+      isValid: {
+        ...changedUser.isValid,
+        [`${[e.target.id]}`]: true,
+      },     
     }
-    setChangedUser(cache)
-  }
+    setChangedUser({
+      ...cache,      
+      updatedAt: new Date().toJSON(),
+    })
 
-  const updateUser = () => {
-    const url = `https://5f65f8ed43662800168e717f.mockapi.io/api/users/${user.id}`;
-    changedUser.updatedAt = new Date().toJSON();
-    const options = {
-      method: 'PUT',
-      body: JSON.stringify(changedUser),
-    };
-
-    return fetch(url, options);
-  }
-
-  const deleteUser = (id) => {
-    const cache = users.filter(user => user.id != id)
-    setUsers(cache)
-    const url = `https://5f65f8ed43662800168e717f.mockapi.io/api/users/${id}`;
-    const options = {
-      method: 'DELETE',
-    };
-
-    return fetch(url, options);
-  };
+    console.dir(e.target)
+    
+    if (e.target.id === "phone" && e.target.value.length !== 10 && !/0[0-9]{9}/.test(e.target.value)) {
+      e.target.style.borderColor = "red"
+    } else if (e.target.id === "email" && !/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$/.test(e.target.value)) {
+      e.target.style.borderColor = "red"
+    } else if ((e.target.id === "name" && e.target.value.length === 60)
+      || (e.target.id === "surname" && e.target.value.length === 60 )
+      || (e.target.value.length < 3 && e.target.id === "name")
+      || (e.target.value.length < 3 && e.target.id === "surname")) {
+      e.target.style.borderColor = "red"
+    } else {
+      e.target.style.borderColor = "";
+      setChangedUser({
+        ...cache, 
+        isValid: {
+          ...cache.isValid,
+          [`${[e.target.id]}`]: true,
+        },
+      });
+    }
+  }  
+  
+  console.log(user)
   
   return (  
     <div className="card">           
@@ -41,31 +54,31 @@ export const User = ({ user, setUsers, users }) => {
           id="name"
           className="card__title" 
           value={changedUser.name} 
-          onChange={changeUser}
+          onChange={editUser}
         />
         <input 
-          id="surname="
+          id="surname"
           className="card__title" 
           value={changedUser.surname} 
-          onChange={changeUser}
+          onChange={editUser}
         />
         <input 
           id="birth"
           className="card__input" 
           type="date" 
-          value={changedUser.birth} 
-          onChange={changeUser}
+          value={changedUser.birth && changedUser.birth.slice(0,10)} 
+          onChange={editUser}
         />
         <input 
           id="email"
           className="card__input" 
           value={changedUser.email} 
-          onChange={changeUser}
+          onChange={editUser}
         />
         <input 
           className="card__input" 
           value={changedUser.phone} 
-          onChange={changeUser}
+          onChange={editUser}
           id="phone"
         />
         <input 
@@ -84,7 +97,14 @@ export const User = ({ user, setUsers, users }) => {
         <button 
           type="button" 
           className="card__button"
-          onClick={updateUser}
+          onClick={()=>updateUser(changedUser)}
+          disabled={() => (
+            changedUser.isValid    
+            ? Object.values(changedUser.isValid).length !== 5 
+            ? true 
+            : !Object.values(changedUser.isValid).every(val => val === true)
+            : true
+          )}
         >
           Update                                   
         </button>

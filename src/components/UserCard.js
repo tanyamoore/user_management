@@ -1,13 +1,13 @@
 import React from "react";
 import { User } from "./User";
 
-export const UserCard = ({ users, setUsers }) => (
+export const UserCard = ({ users, updateUser, deleteUser }) => (
   <div className="block">
     {users.map(user=>
       <User 
         user={user}
-        users={users}
-        setUsers={setUsers}
+        updateUser={updateUser}
+        deleteUser={deleteUser}
       />
     )}
   </div>
