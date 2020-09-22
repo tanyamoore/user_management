@@ -1,172 +1,148 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers } from './api/users';
+import { addUserOnServer, getUsers, updateUser } from './api/users';
 import './App.css';
+import { Input } from './components/Input';
+import { Pagination } from './components/Pagination';
+import { UserCard } from './components/UserCard';
 
 
 function App() {
-const [users, setUsers] = useState([])
-const [user, setUser] = useState({})
-const [currentPage, setCurrentPage] = useState(1)
-const [usersPerPage, setUsersPerPage] = useState(10)
+  const [users, setUsers] = useState([])
+  const [user, setUser] = useState({})
+  const [currentPage, setCurrentPage] = useState(1)
+  const [usersPerPage] = useState(10);
+  
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;    
+  const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
+  console.log(currentUsers)
 
-const addUsers = () => {
-  const url = 'https://5f65f8ed43662800168e717f.mockapi.io/api/users';
-  const options = {
-    method: 'POST',
-    body: JSON.stringify(users),
-  };
-  return fetch(url, options);    
-};
+  const paginate = (num) => { 
+    setCurrentPage(num);    
+  } 
 
-
-const addUser = (e) => {
-  let cache = {
-    id: users.length+1,
-    ...user,
-    [e.target.id]: `${e.target.value}`,
-    createdAt: new Date().toString(),
+  const validate = (e, cache) => {
+    if (e.target.id === "phone" && e.target.value.length !== 10 && !/0[0-9]{9}/.test(e.target.value)) {
+      e.target.labels[0].textContent = "This field must contain 10 symbols and start with 0";
+      e.target.labels[0].style.color = "red";
+      e.target.style.borderColor = "red"
+    } else if (e.target.id === "email" && !/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$/.test(e.target.value)) {
+      e.target.labels[0].textContent = "Please, enter correct email. Example: email@gmail.com";
+      e.target.labels[0].style.color = "red";
+      e.target.style.borderColor = "red"
+    } else if ((e.target.id === "name" && e.target.value.length === 60)
+      || (e.target.id === "surname" && e.target.value.length === 60 )
+      || (e.target.value.length < 3 && e.target.id === "name")
+      || (e.target.value.length < 3 && e.target.id === "surname")) {
+      console.dir(e.target)    
+      e.target.labels[0].textContent = "This field must contain more than 3, and less than 60 symbols";
+      e.target.labels[0].style.color = "red";
+      e.target.style.borderColor = "red"
+    } else {
+      e.target.labels[0].textContent = `Please, enter your ${e.target.id}:`;
+      e.target.labels[0].style.color = "";
+      e.target.style.borderColor = "";
+      setUser({
+        ...cache, 
+        isValid: {
+          ...cache.isValid,
+          [`${[e.target.id]}`]: true,
+        },
+      });
+    }
   }
-  setUser(cache);
-  console.log(JSON.stringify(users)) 
-}
 
+  const handleChange = (e) => {  
+    let cache = {
+      id: users.length+1+'',
+      ...user,
+      [e.target.id]: `${e.target.value}`,
+      createdAt: new Date().toJSON(),
+      isValid: {
+        ...user.isValid,
+        [`${[e.target.id]}`]: false
+      } 
+    }
+    setUser(cache);   
 
-useEffect(() => {
-  async function fetchData() {
-    const response = await getUsers();
-    setUsers(response)
+    validate(e, cache)
   }
-  fetchData();
-  addUsers();   
-}, []); 
 
+  const isValid = () => (
+    user.isValid    
+    ? Object.values(user.isValid).length !== 5 
+    ? true 
+    : !Object.values(user.isValid).every(val => val === true)
+    : true
+  )
 
-const activeLabel = (e)=>{
-  console.log(e.target.labels[0])
-  e.target.labels[0].className = 'active'
-}
+  useEffect(() => {
+    async function fetchData() {
+      const response = await getUsers();
+      setUsers(response);
+    }
+    fetchData(); 
+  }, []); 
 
-const deleteUser = (id) => {
-  const url = `https://5f65f8ed43662800168e717f.mockapi.io/api/users/${id}`;
-  const options = {
-    method: 'DELETE',
+  const deleteUser = (id) => {
+    const conf = window.confirm(`Are you sure to delete this User?`);
+    if(conf) {
+      const cache = users.filter(user => user.id !== id);
+      setUsers(cache);
+      const url = `https://5f65f8ed43662800168e717f.mockapi.io/api/users/${id}`;
+      const options = {
+        method: 'DELETE',
+      };
+
+      return fetch(url, options);
+    };
   };
-
-  return fetch(url, options);
-};
-
-
-// const handleValidation = (event) => {
-//   const { value, name } = event.target;
-//   const errorName = `${name}Error`;
-//   // eslint-disable-next-line max-len
-//   const patternPhone = /(\+3[-_()\s]+|\+3\s?[(]{0,1}[0-9]{3}[)]{0,1}\s?\d{3}[-]{0,1}\d{2}[-]{0,1}\d{2})/;
-//   const patternMail = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-//   let isValid;
-
-//   switch (name) {
-//     case 'name':
-//       isValid = value.length < 60;
-//       break;
-//     case 'surname':
-//       isValid = value.length < 60;
-//       break;
-//     case 'phone':
-//       isValid = !patternPhone.test(value);
-//       break;
-//     case 'email':
-//       isValid = !patternMail.test(value);
-//       break;
-//     default: isValid = false;
-//   }
-
-//   setUser({
-//     validation: Object.values(user.errors)
-//       .every(input => input === false),
-//   })
-
-//   setUser({
-//     errors: {
-//       ...user.errors,
-//       [errorName]: isValid,
-//     },
-//   })
-// }
-
-console.log(users)
 
   return (
-    <div className="App">          
-      <form className="form">     
-      <div class="input-field col s6">  
-          <input  
-            className="fields" 
-            type="text" 
-            id="name" 
-            onChange={addUser}
-            value={user.name}
-            onFocus={activeLabel}
-            //onBlur={handleValidation}
-          />
-          <label htmlFor="name">Please, enter your name:</label>      
-        </div>  
-        <div class="input-field col s6"> 
-          <input 
-            className="fields" 
-            type="text" 
-            id="surname" 
-            onChange={addUser}
-            value={user.surname}
-            onFocus={activeLabel}
-            //onBlur={handleValidation}
-          />
-          <label htmlFor="surname">Please, enter your surname:</label>        
-        </div>
-        <div class="input-field col s6"> 
-          <input 
-            className="fields" 
-            type="date" 
-            id="birth" 
-            onChange={addUser}
-            value={user.birth}
-            onFocus={activeLabel}
-            //onBlur={handleValidation}
-          />
-          <label htmlFor="birth">Please, enter your date of birth:</label>        
-        </div>
-        <div class="input-field col s6"> 
-          <input 
-            className="fields" 
-            type="text" 
-            id="phone" 
-            onChange={addUser}
-            value={user.phone}
-            onFocus={activeLabel}
-            //onBlur={handleValidation}
-          />
-          <label htmlFor="phone">Please, enter your phone:</label>        
-        </div>
-        <div class="input-field col s6"> 
-          <input 
-            className="fields" 
-            type="text" 
-            id="email" 
-            onChange={addUser}
-            value={user.email}
-            onFocus={activeLabel}
-            //onBlur={handleValidation}
-          />
-          <label htmlFor="email">Please, enter your email:</label>
-        </div>
+    <div className="App">     
+      <form className="form">    
+        <Input 
+          id={'name'}
+          handleChange={handleChange}
+          type="text"
+          user={user}
+          length={'60'}
+        />
+        <Input 
+          id={'surname'}
+          handleChange={handleChange}
+          type="text"
+          user={user}
+          length={'60'}
+        />    
+        <Input 
+          type={"date"} 
+          id={"birth"} 
+          handleChange={handleChange}
+          user={user}
+        />
+        <Input 
+          type={"tel"}
+          id={"phone"} 
+          length={"10"}
+          handleChange={handleChange}
+          user={user}        
+        />
+        <Input 
+          type={"email"}
+          id={"email"}
+          handleChange={handleChange}
+          user={user} 
+        />
         <button 
-          class="btn waves-effect waves-light" 
+          id="btn"
+          className="btn waves-effect waves-light" 
           type="submit" 
           name="action"
-          pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
-          onClick={
-            (e) => {
-              e.preventDefault();
-              setUsers([...users,user]);
+          disabled={isValid()}
+          onClick={(e) => {
+            e.preventDefault();
+              setUsers([...users, user]);
               setUser({
                 name: '',
                 surname: '',
@@ -174,39 +150,24 @@ console.log(users)
                 email: '',
                 birth: '',
               });
-            }
+              addUserOnServer(user);
+            }            
           }
         >
           Add User
           <i class="material-icons right">send</i>
         </button>
       </form>
-      <div className="block">
-        {users.map(user=>
-          <div class="row">
-            <div class="col s12 m6">
-              <div class="card blue-grey darken-1">
-                <div class="card-content white-text">
-                  <span class="card-title">{user.name} {user.surname}</span>
-                  <p>{user.birth}</p>
-                  <p>{user.email}</p>
-                  <p>{user.phone}</p>
-                  <p>{user.updatedAt || user.createdAt}</p>
-                </div>
-                <div class="card-action">
-                <a class="waves-effect waves-light btn-small">Edit</a>
-                <a class="waves-effect waves-light btn-small">
-                  <button
-                    onClick={deleteUser}
-                  >Delete </button>
-                                   
-                </a>
-                </div>
-              </div>
-            </div>
-          </div> 
-        )}
-      </div>
+      <Pagination 
+        usersPerPage={usersPerPage}
+        totalUsers={users.length}
+        paginate={paginate}
+      />
+      <UserCard 
+        users={currentUsers}
+        updateUser={updateUser}
+        deleteUser={deleteUser}
+      />
     </div>
   );
 }
