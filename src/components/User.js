@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { updateUser } from '../api/users';
 
-export const User = ({ user, deleteUser, updateUser }) => {
+export const User = ({ user, deleteUser }) => {
   const [changedUser, setChangedUser] = useState(user);
 
   useEffect(() => {
@@ -8,31 +9,54 @@ export const User = ({ user, deleteUser, updateUser }) => {
   },[user])
 
   const editUser = (e) => {
-    console.log(changedUser)
     const cache = {
       ...changedUser,
-      [e.target.id]: e.target.value, 
+      [e.target.id]: e.target.value,   
       isValid: {
         ...changedUser.isValid,
         [`${[e.target.id]}`]: true,
-      },     
+      }, 
     }
     setChangedUser({
-      ...cache,      
+        ...cache,
+        [e.target.id]: e.target.value,   
+        isValid: {
+          ...cache.isValid,
+          [`${[e.target.id]}`]: false,
+        },       
       updatedAt: new Date().toJSON(),
     })
-
-    console.dir(e.target)
     
     if (e.target.id === "phone" && e.target.value.length !== 10 && !/0[0-9]{9}/.test(e.target.value)) {
-      e.target.style.borderColor = "red"
+      setChangedUser({
+        ...cache, 
+        isValid: {
+          ...cache.isValid,
+          [`${[e.target.id]}`]: false,
+        },
+      })
+      e.target.style.borderColor = "red"      
     } else if (e.target.id === "email" && !/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$/.test(e.target.value)) {
       e.target.style.borderColor = "red"
+      setChangedUser({
+        ...cache, 
+        isValid: {
+          ...cache.isValid,
+          [`${[e.target.id]}`]: false,
+        },
+      })
     } else if ((e.target.id === "name" && e.target.value.length === 60)
       || (e.target.id === "surname" && e.target.value.length === 60 )
       || (e.target.value.length < 3 && e.target.id === "name")
       || (e.target.value.length < 3 && e.target.id === "surname")) {
       e.target.style.borderColor = "red"
+      setChangedUser({
+        ...cache, 
+        isValid: {
+          ...cache.isValid,
+          [`${[e.target.id]}`]: false,
+        },        
+      })      
     } else {
       e.target.style.borderColor = "";
       setChangedUser({
@@ -43,9 +67,8 @@ export const User = ({ user, deleteUser, updateUser }) => {
         },
       });
     }
+    console.log(cache)
   }  
-  
-  console.log(user)
   
   return (  
     <div className="card">           
@@ -97,14 +120,8 @@ export const User = ({ user, deleteUser, updateUser }) => {
         <button 
           type="button" 
           className="card__button"
-          onClick={()=>updateUser(changedUser)}
-          disabled={() => (
-            changedUser.isValid    
-            ? Object.values(changedUser.isValid).length !== 5 
-            ? true 
-            : !Object.values(changedUser.isValid).every(val => val === true)
-            : true
-          )}
+          onClick={() => updateUser(changedUser)}
+          disabled={!Object.values(changedUser.isValid).every(val => val === true)}
         >
           Update                                   
         </button>

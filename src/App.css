@@ -74,6 +74,9 @@ body {
 .card__button:hover {
   background-color: #2bbbad;
 }
+.card__button:disabled {
+  background-color: grey !important;
+}
 
 .form {
   width: 700px;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { addUserOnServer, getUsers, updateUser } from './api/users';
+import { addUserOnServer, getUsers } from './api/users';
 import './App.css';
 import { Input } from './components/Input';
 import { Pagination } from './components/Pagination';
@@ -165,7 +165,6 @@ function App() {
       />
       <UserCard 
         users={currentUsers}
-        updateUser={updateUser}
         deleteUser={deleteUser}
       />
     </div>
