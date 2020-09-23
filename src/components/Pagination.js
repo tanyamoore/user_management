@@ -9,15 +9,17 @@ export const Pagination = ({ usersPerPage, totalUsers, paginate }) => {
     <nav class="nav">
       <ul>
         {pageNumbers.map(num => (
+          // eslint-disable-next-line react/jsx-no-comment-textnodes
           <li key={num}>
-            <a 
-              href="!#"
+            <button
+              type="button"
+              className="nav__button"
               onClick={()=>{
                 paginate(num)
               }}
             >
               {num}
-            </a>
+            </button>
           </li>
         ))}
         

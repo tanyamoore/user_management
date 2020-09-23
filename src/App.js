@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { addUserOnServer, getUsers, updateUser } from './api/users';
+import { addUserOnServer, getUsers } from './api/users';
 import './App.css';
 import { Input } from './components/Input';
 import { Pagination } from './components/Pagination';
@@ -11,11 +11,6 @@ function App() {
   const [user, setUser] = useState({})
   const [currentPage, setCurrentPage] = useState(1)
   const [usersPerPage] = useState(10);
-  
-  const indexOfLastUser = currentPage * usersPerPage;
-  const indexOfFirstUser = indexOfLastUser - usersPerPage;    
-  const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
-  console.log(currentUsers)
 
   const paginate = (num) => { 
     setCurrentPage(num);    
@@ -83,7 +78,7 @@ function App() {
     }
     fetchData(); 
   }, []); 
-
+  
   const deleteUser = (id) => {
     const conf = window.confirm(`Are you sure to delete this User?`);
     if(conf) {
@@ -97,6 +92,10 @@ function App() {
       return fetch(url, options);
     };
   };
+
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;    
+  const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
 
   return (
     <div className="App">     
@@ -165,7 +164,6 @@ function App() {
       />
       <UserCard 
         users={currentUsers}
-        updateUser={updateUser}
         deleteUser={deleteUser}
       />
     </div>

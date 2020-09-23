@@ -18,6 +18,7 @@ export const addUserOnServer = (user) => {
 };
 
 export const updateUser = (changedUser) => {
+  console.log(changedUser)
   const conf = window.confirm(`Are you sure to change User data?`);
   if(conf) {
     const url = `https://5f65f8ed43662800168e717f.mockapi.io/api/users/${changedUser.id}`;
